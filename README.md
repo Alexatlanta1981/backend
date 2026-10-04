@@ -1,10 +1,10 @@
-# zen-pharma-backend
+# mackllc-backend
 
-Spring Boot microservices monorepo for the Zen Pharma platform. Contains 7 backend services built with Java 17 and deployed to AWS EKS via GitOps (ArgoCD).
+Spring Boot microservices monorepo for the MackLLC platform. Contains 7 backend services built with Java 17 and deployed to AWS EKS via GitOps (ArgoCD).
 
 > **Companion repos:**
 > - [`zen-infra`](https://github.com/your-github-username/zen-infra) — Terraform for AWS infrastructure (EKS, RDS, ECR, IAM)
-> - [`zen-pharma-frontend`](https://github.com/your-github-username/zen-pharma-frontend) — React frontend
+> - [`mackllc-frontend`](https://github.com/your-github-username/mackllc-frontend) — React frontend
 > - [`zen-gitops`](https://github.com/your-github-username/zen-gitops) — ArgoCD apps + Helm values
 
 ---
@@ -26,7 +26,7 @@ Spring Boot microservices monorepo for the Zen Pharma platform. Contains 7 backe
 ## Repository Structure
 
 ```
-zen-pharma-backend/
+mackllc-backend/
 ├── api-gateway/
 │   ├── src/
 │   ├── pom.xml

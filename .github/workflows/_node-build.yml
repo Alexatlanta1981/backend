@@ -55,6 +55,7 @@ jobs:
   build-and-push:
     name: Build · SAST · Scan · Push · Sign (${{ inputs.service-name }})
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       id-token: write        # OIDC — AWS + Cosign keyless
       contents: read         # Checkout
@@ -66,7 +67,7 @@ jobs:
     steps:
       # ── Checkout ────────────────────────────────────────────────────────────
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       # ── Derive short-SHA image tag ───────────────────────────────────────────
       - name: Set image tag
@@ -75,7 +76,7 @@ jobs:
 
       # ── Node.js toolchain ────────────────────────────────────────────────────
       - name: Setup Node.js ${{ inputs.node-version }}
-        uses: actions/setup-node@v5
+        uses: a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: ${{ inputs.node-version }}
           cache: npm
@@ -96,14 +97,14 @@ jobs:
 
       - name: Upload Jest coverage report
         if: always()
-        uses: actions/upload-artifact@v6
+        uses: b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: coverage-${{ inputs.service-name }}
           path: ${{ inputs.service-dir }}/coverage/
           retention-days: 7
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v3
+        uses: 383f7e52eae3ab0510c3cb0e7d9d150bbaeab838 # v3
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
@@ -123,14 +124,14 @@ jobs:
 
       # ── AWS credentials via OIDC (no long-lived keys) ─────────────────────────
       - name: Configure AWS credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: 61815dcd50bd041e203e49132bacad1fd04d2708 # v5
         with:
           role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_ID }}:role/pharma-dev-github-actions-role
           aws-region: ${{ inputs.aws-region }}
 
       - name: Login to Amazon ECR
         id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
+        uses: 03f1aad4c6c7ffd436567f42f9384779290529bd # v2
 
       # ── Docker build (multi-stage, non-root UID/GID 1000) ─────────────────────
       - name: Build Docker image
@@ -147,13 +148,13 @@ jobs:
 
       # ── Trivy — image scan (fail on HIGH/CRITICAL CVEs) ───────────────────────
       - name: Trivy — Image vulnerability scan
-        uses: aquasecurity/trivy-action@master
+        uses: ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:
           image-ref: ${{ steps.docker-build.outputs.image }}
           format: sarif
           output: trivy-results.sarif
           severity: HIGH,CRITICAL
-          exit-code: '0'
+          exit-code: '1'
           ignore-unfixed: true
 
       # ── Push image to ECR ─────────────────────────────────────────────────────
@@ -168,7 +169,7 @@ jobs:
 
       # ── Cosign keyless sign ────────────────────────────────────────────────────
       - name: Install Cosign
-        uses: sigstore/cosign-installer@v3
+        uses: 398d4b0eeef1380460a10c8013a76f728fb906ac # v3
 
       - name: Cosign — Sign image (keyless, GitHub OIDC → Fulcio → Rekor)
         run: |
