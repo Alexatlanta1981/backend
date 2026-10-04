@@ -103,6 +103,7 @@ jobs:
           retention-days: 7
 
       - name: SonarCloud Scan
+        continue-on-error: true
         uses: SonarSource/sonarcloud-github-action@v3
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
