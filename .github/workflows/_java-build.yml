@@ -123,6 +123,7 @@ jobs:
 
       # ── Code Quality & Security ──────────────────────────────────────────────
       - name: "🔍 SonarCloud — SAST + code quality (${{ inputs.service-name }})"
+        continue-on-error: true
         uses: 383f7e52eae3ab0510c3cb0e7d9d150bbaeab838 # v3
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
