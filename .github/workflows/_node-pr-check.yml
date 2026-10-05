@@ -40,12 +40,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           fetch-depth: 0
 
       - name: Setup Node.js ${{ inputs.node-version }}
-        uses: a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
         with:
           node-version: ${{ inputs.node-version }}
           cache: npm
@@ -65,14 +65,14 @@ jobs:
 
       - name: Upload Jest coverage report
         if: always()
-        uses: b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: coverage-${{ inputs.service-name }}
           path: ${{ inputs.service-dir }}/coverage/
           retention-days: 3
 
       - name: SonarCloud Scan
-        uses: 383f7e52eae3ab0510c3cb0e7d9d150bbaeab838 # v3
+        uses: SonarSource/sonarcloud-github-action@383f7e52eae3ab0510c3cb0e7d9d150bbaeab838 # v3
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:

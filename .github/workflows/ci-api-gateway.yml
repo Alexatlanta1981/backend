@@ -56,7 +56,7 @@ jobs:
     timeout-minutes: 30
     environment: dev
     steps:
-      - uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
 
       - name: Generate short-lived GitOps token (GitHub App)
         id: app-token
@@ -68,7 +68,7 @@ jobs:
           repositories: gitops
 
       - name: Checkout GitOps repo
-        uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           repository: ${{ env.GITOPS_REPO }}
           token: ${{ steps.app-token.outputs.token }}
