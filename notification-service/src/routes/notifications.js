@@ -30,7 +30,7 @@ router.post('/qc-alert', async (req, res) => {
   try {
     await notificationService.send({
       type: 'EMAIL',
-      recipient: process.env.QC_ALERT_EMAIL || 'qc@pharma.com',
+      recipient: process.env.QC_ALERT_EMAIL || 'qc@mackllc.com',
       subject: `QC Alert: Batch ${batchNumber}`,
       message: `Quality control test result for batch ${batchNumber}: ${result}. Tested by: ${testedBy}`
     });
@@ -45,7 +45,7 @@ router.post('/order-alert', async (req, res) => {
   try {
     await notificationService.send({
       type: 'EMAIL',
-      recipient: process.env.ORDER_ALERT_EMAIL || 'procurement@pharma.com',
+      recipient: process.env.ORDER_ALERT_EMAIL || 'procurement@mackllc.com',
       subject: `Purchase Order Update: ${orderNumber}`,
       message: `Order ${orderNumber} from supplier ${supplier} status: ${status}`
     });

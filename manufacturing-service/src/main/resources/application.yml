@@ -5,9 +5,9 @@ spring:
   application:
     name: manufacturing-service
   datasource:
-    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:pharmadb}?currentSchema=manufacturing
-    username: ${DB_USERNAME:pharma}
-    password: ${DB_PASSWORD:pharma123}
+    url: jdbc:postgresql://${DB_HOST:localhost}:${DB_PORT:5432}/${DB_NAME:mackllcdb}?currentSchema=manufacturing
+    username: ${DB_USERNAME:mackllc}
+    password: ${DB_PASSWORD:mackllc123}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
@@ -36,6 +36,6 @@ management:
 
 logging:
   level:
-    com.pharma: ${LOG_LEVEL:INFO}
+    com.mackllc: ${LOG_LEVEL:INFO}
   pattern:
     console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"

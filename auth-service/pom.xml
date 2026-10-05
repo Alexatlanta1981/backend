@@ -9,7 +9,7 @@
     <version>3.2.0</version>
     <relativePath/>
   </parent>
-  <groupId>com.pharma</groupId>
+  <groupId>com.mackllc</groupId>
   <artifactId>auth-service</artifactId>
   <version>1.0.0</version>
   <packaging>jar</packaging>

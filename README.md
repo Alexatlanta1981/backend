@@ -1,10 +1,10 @@
-# zen-pharma-backend
+# SAAS - HENRY FORD (backend)
 
-Spring Boot microservices monorepo for the Zen Pharma platform. Contains 7 backend services built with Java 17 and deployed to AWS EKS via GitOps (ArgoCD).
+Spring Boot microservices monorepo for the SAAS - HENRY FORD platform. Contains 7 backend services built with Java 17 and deployed to AWS EKS via GitOps (ArgoCD).
 
 > **Companion repos:**
 > - [`zen-infra`](https://github.com/your-github-username/zen-infra) — Terraform for AWS infrastructure (EKS, RDS, ECR, IAM)
-> - [`zen-pharma-frontend`](https://github.com/your-github-username/zen-pharma-frontend) — React frontend
+> - [`mackllc-frontend`](https://github.com/your-github-username/mackllc-frontend) — React frontend
 > - [`zen-gitops`](https://github.com/your-github-username/zen-gitops) — ArgoCD apps + Helm values
 
 ---
@@ -26,7 +26,7 @@ Spring Boot microservices monorepo for the Zen Pharma platform. Contains 7 backe
 ## Repository Structure
 
 ```
-zen-pharma-backend/
+mackllc-backend/
 ├── api-gateway/
 │   ├── src/
 │   ├── pom.xml
@@ -110,16 +110,16 @@ PROD is promoted manually via `promote-prod.yml` (workflow_dispatch with service
 cd auth-service
 
 # Start PostgreSQL (Docker)
-docker run -d --name pharma-db \
-  -e POSTGRES_DB=pharma \
-  -e POSTGRES_USER=pharma \
-  -e POSTGRES_PASSWORD=pharma \
+docker run -d --name mackllc-db \
+  -e POSTGRES_DB=mackllc \
+  -e POSTGRES_USER=mackllc \
+  -e POSTGRES_PASSWORD=mackllc \
   -p 5432:5432 postgres:15-alpine
 
 # Set environment variables
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pharma
-export SPRING_DATASOURCE_USERNAME=pharma
-export SPRING_DATASOURCE_PASSWORD=pharma
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/mackllc
+export SPRING_DATASOURCE_USERNAME=mackllc
+export SPRING_DATASOURCE_PASSWORD=mackllc
 export JWT_SECRET=local-dev-secret
 
 # Run

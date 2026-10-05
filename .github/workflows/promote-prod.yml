@@ -2,7 +2,7 @@ name: Promote to PROD
 
 # Triggered manually — picks up the image currently running in QA and opens
 # a PR in the GitOps repo (vars.GITOPS_REPO) to promote it to PROD.
-# PROD ArgoCD app (pharma-prod) requires manual sync after merge.
+# PROD ArgoCD app (mackllc-prod) requires manual sync after merge.
 
 on:
   workflow_dispatch:
@@ -33,16 +33,26 @@ jobs:
   promote:
     name: "🚀 Promote to PROD"
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     environment: prod
 
     steps:
-      - uses: actions/checkout@v5
+      - uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+
+      - name: Generate short-lived GitOps token (GitHub App)
+        id: app-token
+        uses: actions/create-github-app-token@fee1f7d63c2ff003460e3d139729b119787bc349 # v2
+        with:
+          app-id: ${{ vars.GITOPS_APP_ID }}
+          private-key: ${{ secrets.GITOPS_APP_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+          repositories: gitops
 
       - name: Checkout GitOps repo
-        uses: actions/checkout@v5
+        uses: fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
           repository: ${{ env.GITOPS_REPO }}
-          token: ${{ secrets.GITOPS_TOKEN }}
+          token: ${{ steps.app-token.outputs.token }}
           path: _gitops
 
       - name: Install yq
@@ -88,7 +98,7 @@ jobs:
 
       - name: Create branch, patch values, open PR
         env:
-          GH_TOKEN: ${{ secrets.GITOPS_TOKEN }}
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
           SVC: ${{ inputs.service }}
           ACTOR: ${{ github.actor }}
           SERVER_URL: ${{ github.server_url }}
@@ -126,7 +136,7 @@ jobs:
             "- [ ] Runbook link added to change ticket" \
             "" \
             "## Post-merge" \
-            "ArgoCD app \`pharma-prod/${SVC}\` is configured for **manual sync**." \
+            "ArgoCD app \`mackllc-prod/${SVC}\` is configured for **manual sync**." \
             "After merging, trigger sync in ArgoCD and monitor the rollout." \
             "" \
             "Merging this PR updates ${PROD_VALUES}." > /tmp/pr-body.md
@@ -138,4 +148,4 @@ jobs:
             --base main \
             --head "$BRANCH"
 
-          echo "::notice title=PROD PR opened::Review, get approvals, and merge in ${GITOPS_REPO_NAME}. Then manually sync ArgoCD pharma-prod/${SVC}."
+          echo "::notice title=PROD PR opened::Review, get approvals, and merge in ${GITOPS_REPO_NAME}. Then manually sync ArgoCD mackllc-prod/${SVC}."
