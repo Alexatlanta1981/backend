@@ -21,7 +21,7 @@ async function send(notification) {
 
 async function sendEmail({ recipient, subject, message }) {
   const info = await transporter.sendMail({
-    from: process.env.SMTP_FROM || 'noreply@pharma.com',
+    from: process.env.SMTP_FROM || 'noreply@mackllc.com',
     to: recipient,
     subject,
     text: message,

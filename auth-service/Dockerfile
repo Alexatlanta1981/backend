@@ -1,7 +1,7 @@
 FROM eclipse-temurin:17-jre
 WORKDIR /app
-RUN groupadd -r pharma && useradd -r -g pharma pharma
+RUN groupadd -r mackllc && useradd -r -g mackllc mackllc
 COPY target/*.jar app.jar
-USER pharma
+USER mackllc
 EXPOSE 8081
 ENTRYPOINT ["java", "-jar", "-Djava.security.egd=file:/dev/./urandom", "app.jar"]

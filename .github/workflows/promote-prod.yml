@@ -2,7 +2,7 @@ name: Promote to PROD
 
 # Triggered manually — picks up the image currently running in QA and opens
 # a PR in the GitOps repo (vars.GITOPS_REPO) to promote it to PROD.
-# PROD ArgoCD app (pharma-prod) requires manual sync after merge.
+# PROD ArgoCD app (mackllc-prod) requires manual sync after merge.
 
 on:
   workflow_dispatch:
@@ -136,7 +136,7 @@ jobs:
             "- [ ] Runbook link added to change ticket" \
             "" \
             "## Post-merge" \
-            "ArgoCD app \`pharma-prod/${SVC}\` is configured for **manual sync**." \
+            "ArgoCD app \`mackllc-prod/${SVC}\` is configured for **manual sync**." \
             "After merging, trigger sync in ArgoCD and monitor the rollout." \
             "" \
             "Merging this PR updates ${PROD_VALUES}." > /tmp/pr-body.md
@@ -148,4 +148,4 @@ jobs:
             --base main \
             --head "$BRANCH"
 
-          echo "::notice title=PROD PR opened::Review, get approvals, and merge in ${GITOPS_REPO_NAME}. Then manually sync ArgoCD pharma-prod/${SVC}."
+          echo "::notice title=PROD PR opened::Review, get approvals, and merge in ${GITOPS_REPO_NAME}. Then manually sync ArgoCD mackllc-prod/${SVC}."

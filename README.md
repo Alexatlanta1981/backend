@@ -110,16 +110,16 @@ PROD is promoted manually via `promote-prod.yml` (workflow_dispatch with service
 cd auth-service
 
 # Start PostgreSQL (Docker)
-docker run -d --name pharma-db \
-  -e POSTGRES_DB=pharma \
-  -e POSTGRES_USER=pharma \
-  -e POSTGRES_PASSWORD=pharma \
+docker run -d --name mackllc-db \
+  -e POSTGRES_DB=mackllc \
+  -e POSTGRES_USER=mackllc \
+  -e POSTGRES_PASSWORD=mackllc \
   -p 5432:5432 postgres:15-alpine
 
 # Set environment variables
-export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/pharma
-export SPRING_DATASOURCE_USERNAME=pharma
-export SPRING_DATASOURCE_PASSWORD=pharma
+export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/mackllc
+export SPRING_DATASOURCE_USERNAME=mackllc
+export SPRING_DATASOURCE_PASSWORD=mackllc
 export JWT_SECRET=local-dev-secret
 
 # Run

@@ -1,7 +1,7 @@
 {
   "name": "notification-service",
   "version": "1.0.0",
-  "description": "Pharma notification service for email and SMS alerts",
+  "description": "Mackllc notification service for email and SMS alerts",
   "main": "src/index.js",
   "scripts": {
     "start": "node src/index.js",
