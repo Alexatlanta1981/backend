@@ -224,11 +224,11 @@ jobs:
           COUNT=$(jq '[.runs[].results[]] | length' trivy-results.sarif)
           [ "$COUNT" -eq 0 ] && { echo "No findings"; exit 0; }
           LIST=$(jq -r '[.runs[].results[] | "- **\(.ruleId)**: \(.message.text | split("\n")[0:4] | join(" | "))"] | unique | .[:60][]' trivy-results.sarif)
-          BODY=$(printf 'Trivy found **%s** fixable HIGH/CRITICAL findings in `%s` (image `%s`).\n\n%s\n\n**Fix:** bump the listed dependencies or the base image in the Dockerfile to the fixed versions, keep tests green, and open a PR. Re-run CI to confirm Trivy is clean.\n\nRun: %s/%s/actions/runs/%s' "$COUNT" "$${{ inputs.service-name }}" "$IMAGE" "$LIST" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
-          TITLE="Trivy: fixable HIGH/CRITICAL CVEs in $${{ inputs.service-name }}"
+          BODY=$(printf 'Trivy found **%s** fixable HIGH/CRITICAL findings in `%s` (image `%s`).\n\n%s\n\n**Fix:** bump the listed dependencies or the base image in the Dockerfile to the fixed versions, keep tests green, and open a PR. Re-run CI to confirm Trivy is clean.\n\nRun: %s/%s/actions/runs/%s' "$COUNT" "${{ inputs.service-name }}" "$IMAGE" "$LIST" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
+          TITLE="Trivy: fixable HIGH/CRITICAL CVEs in ${{ inputs.service-name }}"
           gh label create security --color B60205 2>/dev/null || true
           N=$(gh issue list --state open --label security --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
-          if [ -n "$N" ]; then gh issue edit "$N" --body "$BODY"; else gh issue create --title "$TITLE" --body "$BODY" --label security --assignee "@copilot" || gh issue create --title "$TITLE" --body "$BODY" --label security; fi
+          if [ -n "$N" ]; then gh issue edit "$N" --body "$BODY"; else gh issue create --title "$TITLE" --body "$BODY" --label security --assignee "copilot-swe-agent" || gh issue create --title "$TITLE" --body "$BODY" --label security; fi
 
       # ── Push & Sign ──────────────────────────────────────────────────────────
       - name: "📦 Push image to ECR"
