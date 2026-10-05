@@ -1,6 +1,6 @@
-# mackllc-backend
+# SAAS - HENRY FORD (backend)
 
-Spring Boot microservices monorepo for the MackLLC platform. Contains 7 backend services built with Java 17 and deployed to AWS EKS via GitOps (ArgoCD).
+Spring Boot microservices monorepo for the SAAS - HENRY FORD platform. Contains 7 backend services built with Java 17 and deployed to AWS EKS via GitOps (ArgoCD).
 
 > **Companion repos:**
 > - [`zen-infra`](https://github.com/your-github-username/zen-infra) — Terraform for AWS infrastructure (EKS, RDS, ECR, IAM)
