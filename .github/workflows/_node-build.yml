@@ -59,6 +59,8 @@ jobs:
     permissions:
       id-token: write        # OIDC — AWS + Cosign keyless
       contents: read         # Checkout
+      security-events: write # SARIF upload
+      issues: write          # Trivy findings issue
       actions: read
     outputs:
       image_tag: ${{ steps.meta.outputs.image_tag }}
@@ -155,8 +157,32 @@ jobs:
           format: sarif
           output: trivy-results.sarif
           severity: HIGH,CRITICAL
-          exit-code: '1'
+          exit-code: '0'
           ignore-unfixed: true
+
+      # ── Route findings to a fixer (code scanning + one tracking issue per service)
+      - name: "📤 Upload Trivy SARIF to code scanning"
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-${{ inputs.service-name }}
+
+      - name: "🐞 Open/update Trivy findings issue (${{ inputs.service-name }})"
+        if: always() && hashFiles('trivy-results.sarif') != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ${{ inputs.service-name }}: ${{ inputs.service-name }}
+          IMAGE: ${{ steps.docker-build.outputs.image }}
+        run: |
+          COUNT=$(jq '[.runs[].results[]] | length' trivy-results.sarif)
+          [ "$COUNT" -eq 0 ] && { echo "No findings"; exit 0; }
+          LIST=$(jq -r '[.runs[].results[] | "- **\(.ruleId)**: \(.message.text | split("\n")[0:4] | join(" | "))"] | unique | .[:60][]' trivy-results.sarif)
+          BODY=$(printf 'Trivy found **%s** fixable HIGH/CRITICAL findings in `%s` (image `%s`).\n\n%s\n\n**Fix:** bump the listed dependencies or the base image in the Dockerfile to the fixed versions, keep tests green, and open a PR. Re-run CI to confirm Trivy is clean.\n\nRun: %s/%s/actions/runs/%s' "$COUNT" "$${{ inputs.service-name }}" "$IMAGE" "$LIST" "$GITHUB_SERVER_URL" "$GITHUB_REPOSITORY" "$GITHUB_RUN_ID")
+          TITLE="Trivy: fixable HIGH/CRITICAL CVEs in $${{ inputs.service-name }}"
+          gh label create security --color B60205 2>/dev/null || true
+          N=$(gh issue list --state open --label security --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$N" ]; then gh issue edit "$N" --body "$BODY"; else gh issue create --title "$TITLE" --body "$BODY" --label security --assignee "@copilot" || gh issue create --title "$TITLE" --body "$BODY" --label security; fi
 
       # ── Push image to ECR ─────────────────────────────────────────────────────
       - name: Push image to ECR
