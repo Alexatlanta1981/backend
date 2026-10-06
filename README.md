@@ -1,170 +1,76 @@
 # SAAS - HENRY FORD (backend)
 
-Spring Boot microservices monorepo for the SAAS - HENRY FORD platform. Contains 7 backend services built with Java 17 and deployed to AWS EKS via GitOps (ArgoCD).
+Eight microservices for the `mackllc` pharmaceutical manufacturing platform: seven Java 17 Spring Boot services and one Node 20 service. Each has its own CI pipeline that builds, scans, signs and pushes an image to ECR, then updates the image tag in `gitops` so Argo CD deploys it.
 
-> **Companion repos:**
-> - [`zen-infra`](https://github.com/your-github-username/zen-infra) — Terraform for AWS infrastructure (EKS, RDS, ECR, IAM)
-> - [`mackllc-frontend`](https://github.com/your-github-username/mackllc-frontend) — React frontend
-> - [`zen-gitops`](https://github.com/your-github-username/zen-gitops) — ArgoCD apps + Helm values
+Companion repos: [infra](https://github.com/Alexatlanta1981/infra) (AWS, Terraform, bootstrap scripts), [gitops](https://github.com/Alexatlanta1981/gitops) (desired state), [frontend](https://github.com/Alexatlanta1981/frontend) (`mackllc-ui`).
 
----
-
-## Services
-
-| Service | Description | Port | DB |
-|---|---|---|---|
-| `api-gateway` | Spring Cloud Gateway — routes all external traffic | 8080 | No |
-| `auth-service` | JWT authentication and user management | 8081 | PostgreSQL |
-| `drug-catalog-service` | Drug catalogue — search, categories, formulary | 8082 | PostgreSQL |
-| `inventory-service` | Stock levels, replenishment, batch tracking | 8083 | PostgreSQL |
-| `manufacturing-service` | Production orders and batch manufacturing | 8084 | PostgreSQL |
-| `supplier-service` | Supplier management and purchase orders | 8085 | PostgreSQL |
-| `notification-service` | Email/SMS notifications (Node.js 20 / Express) | 8086 | No |
-
----
-
-## Repository Structure
+## Architecture
 
 ```
-mackllc-backend/
-├── api-gateway/
-│   ├── src/
-│   ├── pom.xml
-│   └── Dockerfile
-├── auth-service/
-│   └── ...
-├── drug-catalog-service/
-│   └── ...
-├── inventory-service/
-│   └── ...
-├── manufacturing-service/
-│   └── ...
-├── notification-service/          ← Node.js (not Java)
-│   └── ...
-├── supplier-service/
-│   └── ...
-└── .github/
-    └── workflows/
-        ├── _java-build.yml        ← Reusable: full Java CI pipeline
-        ├── _java-pr-check.yml     ← Reusable: lightweight PR check
-        ├── _node-build.yml        ← Reusable: full Node.js CI pipeline
-        ├── _node-pr-check.yml     ← Reusable: lightweight Node PR check
-        ├── ci-<service>.yml       ← Full build + DEV deploy + QA PR (7 files)
-        ├── ci-pr-<service>.yml    ← Feature branch check (7 files)
-        └── promote-prod.yml       ← Manual PROD promotion trigger
+ push to develop / release/**                                   pull request
+          │                                                          │
+          ▼                                                          ▼
+ ci-<service>.yml ──► _java-build / _node-build            ci-pr-<service>.yml ──► _java-pr-check / _node-pr-check
+   test + JaCoCo >=80%, SonarCloud, OWASP Dependency Check, Trivy      (tests and scans only)
+   build image ──► push ECR (tag sha-<7>) ──► Cosign keyless sign
+          │
+          ▼  GitHub App token
+   commit new tag to gitops envs/dev ──► Argo CD syncs ──► EKS
+
+ promote-qa.yml / promote-prod.yml: move an already-built tag to qa / prod values in gitops
 ```
 
----
+AWS access from CI uses GitHub OIDC (no stored keys). The API gateway fronts the other services.
 
-## CI Pipeline Overview
+## Layout
 
-Every push to `develop` or `release/**` runs the full pipeline for the changed service:
-
-```
-1. Gitleaks (secret scan)
-2. Maven verify + JaCoCo coverage (≥ 80%)  — real PostgreSQL sidecar for DB services
-3. CodeQL SAST (security-extended queries)
-4. Semgrep SAST (p/java, p/spring-boot, p/owasp-top-ten)
-5. OWASP Dependency Check (CVSS ≥ 7.0)
-6. Docker build (multi-stage, non-root UID 1000)
-7. Trivy image scan (HIGH/CRITICAL, ignore-unfixed)
-8. ECR push → tag: sha-<7chars>
-9. Cosign keyless sign (GitHub OIDC → Fulcio → Rekor)
-10. Update envs/dev/values-<service>.yaml in zen-gitops → ArgoCD auto-syncs dev
-11. Open QA promotion PR in zen-gitops
-```
-
-Feature branch pushes run only steps 1–5 (~5 min, no Docker/ECR).
-
-**Authentication to AWS:** GitHub OIDC (no `AWS_ACCESS_KEY_ID` stored as a secret).
-
-See [`zen-infra/docs/CICD-IMPLEMENTATION.md`](https://github.com/your-github-username/zen-infra/blob/main/docs/CICD-IMPLEMENTATION.md) for full architecture details.
-
----
-
-## Branching Strategy
-
-| Branch | Purpose | CI |
+| Path | Service | Port (dev) |
 |---|---|---|
-| `feat/*`, `fix/*`, `chore/*` | Feature development | Lightweight: test + SAST only |
-| `develop` | Integration branch | Full pipeline + DEV deploy |
-| `release/**` | Sprint release / hotfix | Full pipeline + DEV deploy |
-| `main` | Stable / matches production | PR check only |
+| `api-gateway/` | Entry point, routes `/api` | 8080 |
+| `auth-service/` | Login, JWT | 8081 |
+| `drug-catalog-service/` | Drug catalog (`catalog-service` in gitops) | 8082 |
+| `inventory-service/` | Inventory | 8083 |
+| `supplier-service/` | Suppliers | 8084 |
+| `manufacturing-service/` | Manufacturing orders | 8085 |
+| `qc-service/` | Quality control | 8086 |
+| `notification-service/` | Notifications (Node 20) | 3000 |
+| `.github/workflows/` | `_*.yml` reusable builds, `ci-*` and `ci-pr-*` per service, `promote-qa`, `promote-prod` | |
 
-PROD is promoted manually via `promote-prod.yml` (workflow_dispatch with service dropdown).
+Ports are taken from the `gitops` dev values. Confirm against each service's config if they change.
 
----
+## Running it
 
-## Local Development
-
-### Prerequisites
-- Java 17 (`sdk install java 17-tem`)
-- Maven 3.9+
-- Docker Desktop
-- PostgreSQL 15 (for DB services)
-
-### Run a service locally
+Local (per service, Java):
 
 ```bash
-# Auth service example
 cd auth-service
-
-# Start PostgreSQL (Docker)
-docker run -d --name mackllc-db \
-  -e POSTGRES_DB=mackllc \
-  -e POSTGRES_USER=mackllc \
-  -e POSTGRES_PASSWORD=mackllc \
-  -p 5432:5432 postgres:15-alpine
-
-# Set environment variables
 export SPRING_DATASOURCE_URL=jdbc:postgresql://localhost:5432/mackllc
 export SPRING_DATASOURCE_USERNAME=mackllc
 export SPRING_DATASOURCE_PASSWORD=mackllc
 export JWT_SECRET=local-dev-secret
-
-# Run
 mvn spring-boot:run
-```
-
-### Run tests
-
-```bash
-cd auth-service
-mvn verify                        # unit + integration tests + JaCoCo coverage
+mvn verify                        # tests + JaCoCo coverage
 mvn verify -Pintegration-tests    # integration tests only
 ```
 
-### Build Docker image locally
+Notification service: `cd notification-service && npm ci && npm test && npm start`.
 
-```bash
-cd auth-service
-docker build -t auth-service:local .
-docker run -p 8081:8081 auth-service:local
-```
+In CI: push to `develop` or `release/**` runs the full pipeline for the services whose folder changed. Pull requests run checks only. Promote with the promote workflows (manual dispatch).
 
----
+Required repo settings: variables `GITOPS_APP_ID`, `GITOPS_REPO`; secrets `GITOPS_APP_PRIVATE_KEY`, `AWS_ACCOUNT_ID`, `SONAR_TOKEN`. GitHub App setup: [infra runbook](https://github.com/Alexatlanta1981/infra/blob/main/docs/DEPLOY-RUNBOOK.md).
 
-## Required GitHub Secrets
+## Why it is designed this way
 
-Set in **Settings → Secrets and variables → Actions**:
+- **One pipeline per service, shared reusable workflows.** Services release independently; build logic lives in one place.
+- **Path-filtered triggers.** Only changed services build.
+- **Quality gates in CI.** Coverage 80% or more, SonarCloud, OWASP Dependency Check, Trivy. A bad build never reaches ECR.
+- **Immutable `sha-<7>` tags and Cosign signing.** Every deployed image traces back to a commit and is verifiable.
+- **OIDC to AWS, GitHub App to gitops.** No long-lived keys or personal tokens.
+- **CI never touches the cluster.** It only commits a tag to `gitops`; Argo CD does the deploy, so Git is the audit trail and rollback is a revert.
+- **Promotion moves a tag, not a rebuild.** QA and prod run the exact image tested in dev.
 
-| Secret | Description |
-|---|---|
-| `AWS_ACCOUNT_ID` | 12-digit AWS account ID |
-| `GITOPS_TOKEN` | GitHub PAT with `contents: write` on `your-github-username/zen-gitops` |
-| `SEMGREP_APP_TOKEN` | Semgrep Cloud token (optional) |
-| `NVD_API_KEY` | NIST NVD API key for OWASP Dep Check (optional, faster) |
+## Known gaps
 
-| Variable | Value |
-|---|---|
-| `GITOPS_REPO` | `your-github-username/zen-gitops` |
-
----
-
-## Full Deployment Guide
-
-See [`zen-infra/docs/FULL-DEPLOYMENT-GUIDE.md`](https://github.com/your-github-username/zen-infra/blob/main/docs/FULL-DEPLOYMENT-GUIDE.md) for the complete 4-stage deployment:
-1. Provision infrastructure (Terraform via GitHub Actions in zen-infra)
-2. Install K8s prerequisites (scripts in zen-infra)
-3. CI pipeline (this repo — auto-triggered on push to develop)
-4. ArgoCD CD (zen-gitops — ArgoCD watches this after step 2 setup)
+- Trivy findings are non-blocking.
+- Per-service ports and env vars are not centrally documented; the `gitops` values are the reference.
+- Local run needs your own Postgres; there is no docker-compose.
